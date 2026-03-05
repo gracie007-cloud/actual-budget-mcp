@@ -25,7 +25,8 @@ import { setupResources } from './resources.js';
 import { setupTools } from './tools/index.js';
 import { SetLevelRequestSchema, isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 
-dotenv.config({ path: '.env' });
+// Reason: dotenv@17 (dotenvx) prints to stdout by default, which breaks MCP stdio JSON parsing
+dotenv.config({ path: '.env', quiet: true } as Parameters<typeof dotenv.config>[0]);
 
 // Initialize the MCP server
 const server = new Server(
@@ -206,9 +207,9 @@ async function main(): Promise<void> {
     const handleLegacySse = (req: Request, res: Response): void => {
       transport = new SSEServerTransport('/messages', res);
       server.connect(transport).then(() => {
-        console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+        console.log = (message: string) => server.sendLoggingMessage({ level: 'info', data: message });
 
-        console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+        console.error = (message: string) => server.sendLoggingMessage({ level: 'error', data: message });
 
         console.error(`Actual Budget MCP Server (SSE) started on port ${resolvedPort}`);
       });
@@ -254,9 +255,9 @@ async function main(): Promise<void> {
             try {
               await server.connect(streamableTransport);
 
-              console.log = (message: string) => server.sendLoggingMessage({ level: 'info', message });
+              console.log = (message: string) => server.sendLoggingMessage({ level: 'info', data: message });
 
-              console.error = (message: string) => server.sendLoggingMessage({ level: 'error', message });
+              console.error = (message: string) => server.sendLoggingMessage({ level: 'error', data: message });
 
               console.error(`Actual Budget MCP Server (Streamable HTTP) started on port ${resolvedPort}`);
             } catch (error) {
@@ -357,12 +358,12 @@ main()
       console.log = (message: string) =>
         server.sendLoggingMessage({
           level: 'info',
-          message,
+          data: message,
         });
       console.error = (message: string) =>
         server.sendLoggingMessage({
           level: 'error',
-          message,
+          data: message,
         });
     }
   })
